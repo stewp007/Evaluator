@@ -42,6 +42,10 @@ bool scan_is_digit(char c) {
     return c >= '0' && c <= '9';
 }
 
+bool scan_is_hex_letter(char c){
+	return (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
 bool scan_is_whitespace(char c) {
     return (c == ' ' || c == '\t');
 }
@@ -69,6 +73,10 @@ bool scan_is_bin_digit(char c) {
     return c == '0' || c ==  '1';
 }
 
+bool scan_is_hex_digit(char c) {
+    return scan_is_digit(c) || scan_is_hex_letter(c);
+}
+
 char *scan_binary_literal(char *p, char *end, struct scan_token_st *tp) {
     int i = 0;
     while (scan_is_bin_digit(*p) && p < end) {
@@ -80,6 +88,17 @@ char *scan_binary_literal(char *p, char *end, struct scan_token_st *tp) {
     tp->id = TK_BINLIT;
     return p;
 }
+char *scan_hex_literal(char *p, char *end, struct scan_token_st *tp) {
+    int i = 0;
+    while (scan_is_hex_digit(*p) && p < end) {
+        tp->value[i] = *p;
+        p += 1;
+        i += 1;
+    }
+    tp->value[i] = '\0'; // == 0
+    tp->id = TK_HEXLIT;
+    return p;
+}
 
 char * scan_token(char *p, char *end, struct scan_token_st *tp) {
     if (p == end) {
@@ -89,7 +108,9 @@ char * scan_token(char *p, char *end, struct scan_token_st *tp) {
         p = scan_token(p, end, tp);
     } else if (*p == '0' && *(p+1) == 'b') {
         p = scan_binary_literal(p + 2, end, tp);
-    } else if (scan_is_digit(*p)) {
+    } else if (*p == '0' && *(p+1) == 'x') {
+    	p = scan_hex_literal(p + 2, end, tp);
+    }else if (scan_is_digit(*p)) {
         p = scan_integer(p, end, tp);
     } else if (*p == '+') {
         p = scan_read_token(tp, p, 1, TK_PLUS);
@@ -103,7 +124,17 @@ char * scan_token(char *p, char *end, struct scan_token_st *tp) {
         p = scan_read_token(tp, p, 1, TK_NOT);
     } else if (*p == '<' && *(p+1) == '<') {
         p = scan_read_token(tp, p, 2, TK_LSL);
-    } else if (*p == '(') {
+    }else if (*p == '>' && *(p+1) == '>') {
+        p = scan_read_token(tp, p, 2, TK_LSR);
+    }else if (*p == '>' && *(p+1) == '-'){
+    	p = scan_read_token(tp, p, 2, TK_ASR);
+    }else if (*p == '^') {
+    	p = scan_read_token(tp, p, 1, TK_XOR);
+    }else if (*p == '&') {
+        p = scan_read_token(tp, p, 1, TK_AND);
+    }else if (*p == '|') {
+        p = scan_read_token(tp, p, 1, TK_OR);
+    }else if (*p == '(') {
         p = scan_read_token(tp, p, 1, TK_LPAREN);
     } else if (*p == ')') {
         p = scan_read_token(tp, p, 1, TK_RPAREN);        

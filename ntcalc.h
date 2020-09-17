@@ -100,7 +100,7 @@ operand     ::= integer
 */
 
 enum parse_expr_enum {EX_INTVAL, EX_OPER1, EX_OPER2};
-enum parse_oper_enum {OP_PLUS, OP_MINUS, OP_MULT, OP_DIV, OP_LSL, OP_NOT};
+enum parse_oper_enum {OP_PLUS, OP_MINUS, OP_MULT, OP_DIV, OP_LSL, OP_LSR, OP_ASR, OP_AND, OP_OR, OP_XOR, OP_NOT};
 
 struct parse_node_st {
     enum parse_expr_enum type;

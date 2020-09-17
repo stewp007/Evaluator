@@ -46,6 +46,11 @@ struct parse_node_st * parse_operand(struct parse_table_st *pt,
         np = parse_node_new(pt);
         np->type = EX_INTVAL;        
         np->intval.value = conv_str_to_uint32(tp->value, 2);
+    } else if (scan_table_accept(st, TK_HEXLIT)) {
+        tp = scan_table_get(st, -1);
+        np = parse_node_new(pt);
+        np->type = EX_INTVAL;        
+        np->intval.value = conv_str_to_uint32(tp->value, 16);
     } else if (scan_table_accept(st, TK_MINUS)) {
         tp = scan_table_get(st, -1);
         np1 = parse_node_new(pt);
@@ -79,6 +84,16 @@ enum parse_oper_enum parse_get_oper(enum scan_token_enum id) {
             rv = OP_DIV; break;
         case TK_LSL:
             rv = OP_LSL; break;
+		case TK_LSR:
+			rv = OP_LSR; break;
+		case TK_ASR:
+			rv = OP_ASR; break;
+		case TK_AND:
+			rv = OP_AND; break;
+		case TK_OR:
+			rv = OP_OR; break;
+		case TK_XOR:
+			rv = OP_XOR; break;
         case TK_NOT:
             rv = OP_NOT; break;
         default:
@@ -98,7 +113,9 @@ struct parse_node_st * parse_expression(struct parse_table_st *pt,
         tp = scan_table_get(st, 0);
         if ((tp->id == TK_PLUS) || (tp->id == TK_MINUS) ||
             (tp->id == TK_MULT) || (tp->id == TK_DIV) || 
-            (tp->id == TK_LSL)) {
+            (tp->id == TK_LSL)  || (tp->id == TK_LSR) ||
+            (tp->id == TK_ASR)  || (tp->id == TK_AND) ||
+            (tp->id == TK_OR)   || (tp->id == TK_XOR)) {
             scan_table_accept(st, TK_ANY);
             np1 = parse_node_new(pt);
             np1->type = EX_OPER2;
@@ -118,7 +135,7 @@ struct parse_node_st * parse_expression(struct parse_table_st *pt,
  * Parse tree pretty printing
  */
 
-char *parse_oper_strings[] = {"PLUS", "MINUS", "MULT", "DIV", "LSL", "NOT"};
+char *parse_oper_strings[] = {"PLUS", "MINUS", "MULT", "DIV", "LSL", "LSR", "ASR", "AND", "OR", "XOR", "NOT"};
 
 void parse_tree_print_indent(int level) {
     level *= 2;

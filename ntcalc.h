@@ -48,9 +48,9 @@ enum scan_token_enum {
     TK_MINUS,  /* - */
     TK_MULT,   /* * */
     TK_DIV,    /* / */
-    TK_ASR,	   /* >- */
     TK_LSL,    /* << */
     TK_LSR,    /* >> */
+    TK_ASR,	   /* >- */
     TK_NOT,    /* ~ */
     TK_AND,    /* & */
     TK_OR,     /* | */

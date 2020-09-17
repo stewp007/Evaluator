@@ -41,21 +41,27 @@ whitespace  ::=  (' ' | '\t') (' ' | '\t')*
 enum scan_token_enum {
     TK_INTLIT, /* -123, 415 */
     TK_BINLIT, /* binary literal 0b011 */
+    TK_HEXLIT, /* hexadecimal literal 0xA2F */
     TK_LPAREN, /* ( */
     TK_RPAREN, /* ) */
     TK_PLUS,   /* + */
     TK_MINUS,  /* - */
     TK_MULT,   /* * */
     TK_DIV,    /* / */
+    TK_ASR,	   /* >- */
     TK_LSL,    /* << */
+    TK_LSR,    /* >> */
     TK_NOT,    /* ~ */
+    TK_AND,    /* & */
+    TK_OR,     /* | */
+    TK_XOR,    /* ^ */
     TK_EOT,    /* end of text */
     TK_ANY,    /* wildcard for parser */
 };
 
-#define SCAN_TOKEN_STRINGS {"TK_INTLIT", "TK_BINLIT", "TK_LPAREN", "TK_RPAREN", \
-                            "TK_PLUS", "TK_MINUS", "TK_MULT", "TK_DIV", "TK_LSL", \
-                            "TK_NOT" "TK_EOT", "TK_ANY"};
+#define SCAN_TOKEN_STRINGS {"TK_INTLIT", "TK_BINLIT","TK_HEXLIT", "TK_LPAREN", "TK_RPAREN", \
+                            "TK_PLUS", "TK_MINUS", "TK_MULT", "TK_DIV", "TK_LSL","TK_LSR", \
+                            "TK_ASR","TK_NOT","TK_AND","TK_OR","TK_XOR", "TK_EOT", "TK_ANY"};
 
 struct scan_token_st {
     enum scan_token_enum id;

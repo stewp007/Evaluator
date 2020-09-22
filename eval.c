@@ -2,10 +2,16 @@
 
 #include "ntcalc.h"
 
+/*
+* Evalutes the parse tree
+*/
 unsigned int eval_tree(struct parse_node_st *np) {
     unsigned int retval = 0;
+    int signed_val = 0;
     unsigned int r = 0;
     unsigned int l = 0;
+    int left;
+    int right;
 
     switch (np->type) {
         case EX_INTVAL:
@@ -43,6 +49,23 @@ unsigned int eval_tree(struct parse_node_st *np) {
                 case OP_LSL:
                     retval = l << r;
                     break;
+                case OP_LSR:
+                	retval = l >> r;
+                	break;
+                case OP_ASR:
+                	left = l;
+               		right = r;
+                	signed_val = left >> right; 
+                	return  signed_val;
+				case OP_AND:
+					retval = l & r;
+					break;
+				case OP_OR:
+					retval = l | r;
+					break;
+				case OP_XOR:
+					retval = l ^ r;
+					break;
                 default:
                     printf("eval: unsupported binary operator\n");
             }

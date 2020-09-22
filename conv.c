@@ -4,33 +4,27 @@
 
 #include "ntcalc.h"
 
+/*
+* Converts a str to a typ uint32_t. The base refers to the number base the string represents
+*/
 uint32_t conv_str_to_uint32(char *str, uint32_t base) {
     uint32_t retval = 0;
     uint32_t place_val = 1;
-
+    
+    while(*str == '0' && *str != '\0'){
+    	str++;
+    }
+    if((strlen(str) > 8 && base == 16) || (strlen(str) > 32 && base == 2)){
+    	printf("Uint32 overflow: %s\n", str);
+    	exit(1);
+    }
     for (int i = strlen(str) - 1; i >= 0; i--) {
 
         char ch = tolower(str[i]);
         uint32_t digit;
 
-        /* This handles binary and decimal digits
-         * for project02: you handle hexadecimal digits
-         */
         if(ch >= 'a' && ch <= 'f'){
-        	switch (ch){
-        		case 'a':
-        			digit = 10; break;
-        		case 'b':
-        			digit = 11; break;
-        		case 'c':
-        			digit = 12; break;
-        		case 'd':
-        			digit = 13; break;
-        		case 'e':
-        			digit = 14; break;
-        		case 'f':
-        			digit = 15; break;
-        	}
+        	digit = ch - 'W';
         }
         
         if (ch >= '0' && ch <= '9'){
@@ -43,21 +37,59 @@ uint32_t conv_str_to_uint32(char *str, uint32_t base) {
     return retval;
 }
 
+/*
+* takes a binary string and inverts it (bitwise NOT ~). then converts the new string into a uint32_t.
+* helper function for conv_uint32_to_decstr.
+*/
+uint32_t conv_bitwise_not(char * bin, int width){
+	char not_bin[width];
+	int i;
+	for(i = 0; i < width; i++){
+		if(bin[i] == '1'){
+			not_bin[i] = '0';
+		}else{
+			not_bin[i] = '1';
+		}
+	}
+	not_bin[i] = '\0';
+	return conv_str_to_uint32(not_bin, 2);
+	
+}
+
+/*
+* converts a uin32_t into a decimal string. Works on positive and negative numbers
+*/
 void conv_uint32_to_decstr(struct ntlang_config_st *nc, uint32_t value, 
                            char *result_str) {
-    uint32_t div, rem;
-    int i, j = 0, len;
-    int msb = nc->width - 1;
+    int div, rem;
+    int len, i, j = 0;
+    int msb = nc->width-1;
     char tmp[SCAN_INPUT_LEN];
-
-    /* This handles non-negative numbers
-     * for project02: you handle negative numbers using msb
-     */
-
-    len = 0;
+    
+    conv_uint32_to_binstr(nc->width, value, tmp);
+    value = conv_str_to_uint32(tmp+2, 2);
+    
     if (value == 0) {
         tmp[len++] = '0';
-    } else {
+    }else if(tmp[(int)strlen(tmp)-msb-1] == '1' && !nc->unsigned_output){ 
+    /*Handles Negative Numbers */
+        result_str[0] = '-';
+        j++;
+        int sign_value = conv_bitwise_not(tmp+2, nc->width);
+        sign_value += 1;
+            while(sign_value != 0){
+            	div = sign_value / 10;
+            	rem = sign_value % 10;
+            	if(rem > 0){
+            		tmp[len] = '0' + rem;
+            	}else{
+            		tmp[len] = '0' - rem;
+            	}
+            	len++;
+            	sign_value = div;
+            }
+    }else {
+    /*Handles Positive numbers*/
         while (value != 0) {
             div = value / 10;
             rem = value % 10;
@@ -73,6 +105,9 @@ void conv_uint32_to_decstr(struct ntlang_config_st *nc, uint32_t value,
     result_str[j] = '\0';
 }
 
+/*
+* Converts a uint32_t into a binary string
+*/
 void conv_uint32_to_binstr(int width, uint32_t value, 
                            char *result_str) {
     int i, j;
@@ -80,7 +115,6 @@ void conv_uint32_to_binstr(int width, uint32_t value,
     result_str[0] = '0';
     result_str[1] = 'b';
     j = 2;
-
     for (i = width - 1; i >= 0; i -= 1) {
         if (((value >> i) & 0b1) == 1)
             result_str[j] = '1';
@@ -92,12 +126,14 @@ void conv_uint32_to_binstr(int width, uint32_t value,
     result_str[j] = '\0';
 }
 
+/*
+* Converts a uint32_t into a hexadecimal string
+*/
 void conv_uint32_to_hexstr(int width, uint32_t value, 
                            char *result_str) {
     int i, j, c = 0, len;
     uint32_t div, rem;
     char tmp[SCAN_INPUT_LEN];
-    
     
     result_str[0] = '0';
     result_str[1] = 'x';
@@ -121,47 +157,28 @@ void conv_uint32_to_hexstr(int width, uint32_t value,
         }
     }
     
-    for (i = len; i >= 0; i--, j++) {
+    for (i = width/4; i >= 0; i--, j++) {
         result_str[j] = tmp[i-1];
     }
-    
     result_str[j] = '\0';
 }
 
-
-uint32_t conv_width_mask(int width){
-	uint32_t  mask = 0;
-	int i, j = 0;
-	char result_str[32];
-	for (i = width - 1; i >= 0; i --, j ++) {
-        result_str[j] = '1';    
-    }	
-    result_str[j] = '\0';
-	mask = atoi(result_str);
-	return mask;
-}
-
+/*
+* Converts a uint32_t into a string of either base 2, 10, or 16
+*/
 void conv_uint32_to_str(struct ntlang_config_st *nc, uint32_t value,
                         char *result_str) {
-    uint32_t iresult;
-
-    /* Mask value to nc->width */
-	if(nc->width != 32){
-		iresult = value & conv_width_mask(nc->width);
-	}else{
-		iresult = value;
-	}
-
-
     switch (nc->base) {
         case 2:
-            conv_uint32_to_binstr(nc->width, iresult, result_str);
+            conv_uint32_to_binstr(nc->width, value, result_str);
             break;
         case 10:
-            conv_uint32_to_decstr(nc, iresult, result_str);
+            conv_uint32_to_decstr(nc, value, result_str);
             break;
         case 16:
-            conv_uint32_to_hexstr(nc->width, iresult, result_str);
+            conv_uint32_to_hexstr(nc->width, value, result_str);
             break;
+        default:
+        	printf("Unsupported base: %d", nc->base);
     }
 }

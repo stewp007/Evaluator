@@ -2,13 +2,18 @@
 
 #include "ntcalc.h"
 
+/*
+* Prints out the final results after evaluating the parse tree
+*/
 void ntlang_print_result(struct ntlang_config_st *nc, uint32_t result) {
     char result_str[SCAN_INPUT_LEN];
-
     conv_uint32_to_str(nc, result, result_str);
     printf("%s\n", result_str);
 }
 
+/*
+* Initializes the ntlang_config_st structure
+*/
 void ntlang_config_init(struct ntlang_config_st *cfg) {
     cfg->verbose = false;
     cfg->base = 10;
@@ -16,6 +21,9 @@ void ntlang_config_init(struct ntlang_config_st *cfg) {
     cfg->unsigned_output = false;
 }
 
+/*
+* Runs the Program. Scans, parses and evaluates the input.
+*/
 int main(int argc, char **argv) {
     struct scan_table_st scan_table;
     struct parse_table_st parse_table;
@@ -42,6 +50,15 @@ int main(int argc, char **argv) {
                 case 'v':
                     cfg.verbose = true;
                     break;
+                case 'u':
+                	cfg.unsigned_output = true;
+                	break;
+                case 'w':
+                	if(atoi(argv[a+1]) == 4 ||atoi(argv[a+1]) == 8 || atoi(argv[a+1]) == 16){
+                		cfg.width = atoi( argv[a+1]);
+                	}
+                	a++;
+                	break;
             }
         }
     }    

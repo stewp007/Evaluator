@@ -1,17 +1,26 @@
 /* parse.c - parsing and parse tree construction */
 
+#include <ctype.h>
+
 #include "ntcalc.h"
+
 
 struct parse_node_st * parse_operand(struct parse_table_st *pt,
                                     struct scan_table_st *st);
 struct parse_node_st * parse_expression(struct parse_table_st *pt,
                                         struct scan_table_st *st);
 
+/*
+* Initializes the parse_table_st structure
+*/
 void parse_table_init(struct parse_table_st *pt) {
     pt->len = 0;
     pt->next = 0;
 }
 
+/*
+* creates a new parse_node_st and adds it to the parse node table
+*/
 struct parse_node_st * parse_node_new(struct parse_table_st *pt) {
     struct parse_node_st *np;
 
@@ -21,16 +30,43 @@ struct parse_node_st * parse_node_new(struct parse_table_st *pt) {
     return np;
 }
 
+/*
+* Prints out an error message and then exits gracefully
+*/
 void parse_error(char *err) {
     printf("parse_error: %s\n", err);
     exit(-1);
 }
 
+/*
+* converts a string decimal value into long long in order to check for overflow
+*/
+long long parse_overflow(char * value){
+	long long retval = 0;
+	int place_val = 1;
+	for (int i = strlen(value) - 1; i >= 0; i--) {
+
+        char ch = tolower(value[i]);
+        long long digit;
+        
+        if (ch >= '0' && ch <= '9'){
+            digit = ch - '0';
+		}
+		
+        retval += digit * place_val;
+        place_val *= 10;
+    }
+    return retval;
+}
+
+/*
+* Parses an operand from the scan_table and adds it to the Parse_table. 
+* It also checks if the value will overflow for TK_INTLIT
+*/
 struct parse_node_st * parse_operand(struct parse_table_st *pt,
                                     struct scan_table_st *st) {
     struct scan_token_st *tp;
     struct parse_node_st *np, *np1;
-
     if (scan_table_accept(st, TK_LPAREN)) {
         np = parse_expression(pt, st);
         if (!scan_table_accept(st, TK_RPAREN)) {
@@ -40,7 +76,12 @@ struct parse_node_st * parse_operand(struct parse_table_st *pt,
         tp = scan_table_get(st, -1);
         np = parse_node_new(pt);
         np->type = EX_INTVAL;
-        np->intval.value = atoi(tp->value);
+        long long overflow = parse_overflow(tp->value);
+        if(overflow > 4294967295){
+        	printf("uint32 overflow: %s\n", tp->value);
+        	exit(1);
+        }
+        np->intval.value = overflow;
     } else if (scan_table_accept(st, TK_BINLIT)) {
         tp = scan_table_get(st, -1);
         np = parse_node_new(pt);
@@ -71,6 +112,9 @@ struct parse_node_st * parse_operand(struct parse_table_st *pt,
     return np;
 }
 
+/*
+* switches the scan_token id with the parse operand id
+*/
 enum parse_oper_enum parse_get_oper(enum scan_token_enum id) {
     enum parse_oper_enum rv;
     switch (id) {
@@ -102,6 +146,9 @@ enum parse_oper_enum parse_get_oper(enum scan_token_enum id) {
     return rv;
 }
 
+/*
+* Parses a scan table expression into the parse table
+*/
 struct parse_node_st * parse_expression(struct parse_table_st *pt,
                                         struct scan_table_st *st) {
     struct scan_token_st *tp;
@@ -149,7 +196,7 @@ void parse_tree_print_expr(struct parse_node_st *np, int level) {
     printf("EXPR ");
 
     if (np->type == EX_INTVAL) {
-        printf("INTVAL %d\n", np->intval.value);
+        printf("INTVAL %u\n", np->intval.value);
     } else if (np->type == EX_OPER1) {
         printf("OPER1 %s\n", parse_oper_strings[np->oper1.oper]);
         parse_tree_print_expr(np->oper1.expr, level+1);
